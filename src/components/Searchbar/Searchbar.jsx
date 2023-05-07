@@ -1,46 +1,39 @@
-import React, { PureComponent } from 'react';
-import {
-  SearchHeader,
-  SearchForm,
-  SearchFormButton,
-  SearchFormButtonLabel,
-  SearchFormInput,
-} from './Searchbar.styled';
+import { Component } from 'react';
+import css from './Searchbar.module.css'
 
-export default class Searchbar extends PureComponent {
-  state = {
-    inputValue: '',
-    isMoviesShown: false,
-  };
+export class Searchbar extends Component {
+    state={
+    inputValue: ""
+    }
 
-  submitHandler = event => {
-    event.preventDefault();
-    this.props.onSubmit(this.state.inputValue);
-  };
-
-  onSearch = e => {
-    this.setState({ inputValue: e.currentTarget.value });
-  };
-
-  render() {
-    return (
-      <div>
-        <SearchHeader>
-          <SearchForm onSubmit={this.submitHandler}>
-            <SearchFormButton type="submit">
-              <SearchFormButtonLabel>Search</SearchFormButtonLabel>
-            </SearchFormButton>
-
-            <SearchFormInput
-              type="text"
-              autoComplete="off"
-              autoFocus
-              placeholder="Search images and photos"
-              onChange={this.onSearch}
-            />
-          </SearchForm>
-        </SearchHeader>
-      </div>
-    );
-  }
+    handleChange = ({ target }) => {
+        this.setState ({
+          inputValue: target.value,
+        });
+    }
+    onSubmit = (e) => {
+        e.preventDefault();
+        this.props.createRequest({ inputValue: this.state.inputValue });
+        this.setState({ inputValue: "" });
+}
+    render() {
+        return (
+          <header className={css.searchbar}>
+            <form className={css.SearchForm} onSubmit={this.onSubmit}>
+              <button type="submit" className={css.SearchFormButton}>
+                <span className="button-label">Search</span>
+              </button>
+              <input
+                className={css.SearchFormInput}
+                type="text"
+                autoComplete="off"
+                autoFocus
+                placeholder="Search images and photos"
+                onChange={this.handleChange}
+                value={this.state.inputValue}
+              />
+            </form>
+          </header>
+        );
+    }
 }

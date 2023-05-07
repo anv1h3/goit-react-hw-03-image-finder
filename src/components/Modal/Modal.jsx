@@ -1,40 +1,32 @@
-import React, { PureComponent } from 'react';
-import { Overlay, ModalWindow } from './Modal.styled';
-import { createPortal } from 'react-dom';
+import { Component } from 'react';
+import css from './Modal.module.css'
 
-const modalRoot = document.querySelector('#modal-root');
+export class Modal extends Component {
+  state = {};
 
-export default class Modal extends PureComponent {
   componentDidMount() {
-    window.addEventListener('keydown', this.closeEscModal);
+    window.addEventListener('keydown', this.handlePressESC);
   }
 
   componentWillUnmount() {
-    window.removeEventListener('keydown', this.closeEscModal);
+    window.removeEventListener('keydown', this.handlePressESC);
   }
 
-  closeEscModal = e => {
-    if (e.code === 'Escape') {
-      this.props.closeModal();
-    }
-  };
-
-  handleBackDropClick = e => {
-    if (e.currentTarget === e.target) {
-      this.props.closeModal();
-    }
+  handlePressESC = e => {
+    if (e.code === 'Escape') this.props.closeModal();
   };
 
   render() {
-    return createPortal(
-      <div>
-        <Overlay onClick={this.handleBackDropClick}>
-          <ModalWindow>
-            <img src={this.props.showModal} alt="" />
-          </ModalWindow>
-        </Overlay>
-      </div>,
-      modalRoot
+    const { closeModal, choosedPicture } = this.props;
+    return (
+      <div
+        className={css.Overlay} onClick={closeModal}
+      >
+        <div>
+         <img className={css.modalPic} src={choosedPicture} alt=''/>
+        </div>
+      </div>
     );
   }
 }
+

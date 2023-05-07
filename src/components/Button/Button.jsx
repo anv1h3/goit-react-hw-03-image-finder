@@ -1,15 +1,12 @@
-import { LoadMore } from './Button.styled';
-import PropTypes from 'prop-types';
 
-export const Button = ({ text, clickHandler }) => {
-  return (
-    <LoadMore type="button" onClick={clickHandler}>
-      {text}
-    </LoadMore>
-  );
-};
+import css from './Button.module.css'
 
-Button.propTypes = {
-  text: PropTypes.string.isRequired,
-  showModal: PropTypes.func,
-};
+export const Button = ({handleClick}) => {
+    return (
+    <div className={css.loadMoreContainer}>
+        <button onClick={handleClick} className={css.loadMore} type="button">
+          Load more
+        </button>
+      </div>
+    );
+}

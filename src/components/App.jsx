@@ -1,102 +1,98 @@
-import React from 'react';
-import Searchbar from './Searchbar/Searchbar';
+import { Component } from "react";
+import { Searchbar } from "./Searchbar/Searchbar";
+import { Loader } from './Loader/Loader';
 import { ImageGallery } from './ImageGallery/ImageGallery';
-import { fetchImages } from '../services/api';
-import Modal from './Modal/Modal';
-import { InfinitySpin } from 'react-loader-spinner';
-import { Button } from './Button/Button';
+import { ImageGalleryItem } from './ImageGalleryItem/ImageGalleryItem';
+import { getPictures } from 'servises/getPictures';
+import { Modal } from './Modal/Modal'
+import {Button} from './Button/Button'
 
-export class App extends React.Component {
+export class App extends Component {
   state = {
-    images: [],
+    request: '',
+    pictures: [],
     isLoading: false,
+    isModalShown: false,
+    choosedPicture: '',
     page: 1,
-    inputValue: '',
-    currentPreview: '',
+    totalHits: 0,
   };
 
-  componentDidUpdate(prevProps, prevState) {
-    if (prevState.inputValue !== this.state.inputValue) {
-      this.getImages(this.state.inputValue);
-    }
-    if (
-      prevState.page !== this.state.page &&
-      prevState.inputValue === this.state.inputValue
-    ) {
-      this.getImages(this.state.inputValue);
-    }
-  }
-
-  getImages = key => {
-    this.setState({ isLoading: true });
-
-    fetchImages(key, this.state.page)
-      .then(({ data: { hits } }) => {
-        this.setState(prevState => {
-          return {
-            images: [...prevState.images, ...hits],
-          };
-        });
-      })
-      .catch(error => console.log(error))
-      .finally(() => {
-        this.setState({ isLoading: false });
-      });
+  createRequest = ({ inputValue }) => {
+    this.setState({ request: inputValue.trim(), page:1, pictures: []});
   };
 
-  getInputValue = value => {
-    this.setState({ inputValue: value, images: [], page: 1 });
+  handleClick = ({ page, pictures }) => {
+    this.setState(prevState => ({
+      page: prevState.page + 1,
+    }));
   };
 
-  loadMore = () => {
-    this.setState(prevState => {
-      return {
-        page: prevState.page + 1,
-      };
-    });
-  };
-
-  openModal = url => {
-    this.setState({ currentPreview: url });
+  showModal = () => {
+    this.setState({ isModalShown: true });
   };
 
   closeModal = () => {
-    this.setState({ currentPreview: '' });
+    this.setState({ isModalShown: false, choosedPicture: '' });
   };
 
+  choosePicture = ({ target }) => {
+    if (target.src) {
+      this.setState({ choosedPicture: target.alt });
+      this.showModal();
+    }
+  };
+
+  componentDidUpdate(_, prevState) {
+    if (
+      prevState.request !== this.state.request ||
+      prevState.page !== this.state.page
+    ) {
+      this.setState({ isLoading: true });
+      getPictures(this.state.request, this.state.page)
+        .then(response => response.json())
+        .then(data => 
+          this.setState(prevState=>({ pictures: [...prevState.pictures, ...data.hits], totalHits: data.totalHits }))
+        )
+        .catch(error => this.setState({ error }))
+        .finally(() => {
+          this.setState({ isLoading: false });
+        });
+    }
+  }
+
   render() {
-    const { images, currentPreview, isLoading } = this.state;
     return (
-      <>
-        <Searchbar onSubmit={this.getInputValue} />
-
-        {images.length !== 0 && (
-          <>
-            <ImageGallery
-              images={this.state.images}
-              openModal={this.openModal}
-            />
-
-            {!isLoading && (
-              <Button text="Load more" clickHandler={this.loadMore} />
-            )}
-          </>
+      <div
+        style={{
+          height: '100vh',
+          fontSize: 40,
+          color: '#010101',
+        }}
+      >
+        <Searchbar createRequest={this.createRequest} />
+        {this.state.isLoading && <Loader />}
+        <ImageGallery onClick={this.choosePicture}>
+          <ImageGalleryItem
+            request={this.state.request}
+            pictures={this.state.pictures}
+            isLoading={this.state.isLoading}
+            totalHits={this.state.totalHits}
+            page={this.state.page}
+          />
+        </ImageGallery>
+        {this.state.pictures &&
+          this.state.page !== Math.ceil(this.state.totalHits / 12) &&
+          this.state.pictures.length >= 12 && (
+            <Button handleClick={this.handleClick} />
+          )}
+        {this.state.isModalShown && (
+          <Modal
+            closeModal={this.closeModal}
+            choosedPicture={this.state.choosedPicture}
+          />
         )}
-        {isLoading && (
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}
-          >
-            <InfinitySpin width="400" color="#4c2ef7" />
-          </div>
-        )}
-        {currentPreview && (
-          <Modal closeModal={this.closeModal} showModal={currentPreview} />
-        )}
-      </>
+      </div>
     );
   }
-}
+};
